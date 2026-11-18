@@ -6,6 +6,7 @@
       "rate": 1.2888
     }
   },
-  "last_full_scan_utc": "2026-11-18T02:19:49+00:00",
-  "cheapest_depart": "2027-05-24"
+  "last_full_scan_utc": "2026-11-18T02:26:25+00:00",
+  "cheapest_depart": "2027-05-25",
+  "alerted": {}
 }
