@@ -22,14 +22,29 @@ try:
                               passenger_info=M.PassengerInfo(adults=4, children=3),
                               flight_segments=segs, seat_type=M.SeatType.ECONOMY,
                               stops=M.MaxStops.ANY, sort_by=M.SortBy.CHEAPEST)
-    sf = SearchFlights()
-    kw = {}
-    if "currency" in inspect.signature(sf.search).parameters: kw["currency"] = "SGD"
-    if "top_n" in inspect.signature(sf.search).parameters: kw["top_n"] = 3
-    res = sf.search(f, **kw)
-    p("type:", type(res), "len:", len(res) if res else res)
-    for r in (res or [])[:6]:
-        p("----"); p(repr(r)[:3000])
+    from fli.search._urls import with_locale_params
+    from fli.search._wire import parse_first_wrb_payload
+    for label, trip, segs_use, cur in [("oneway-noCur", M.TripType.ONE_WAY, segs[:1], None),
+                                       ("oneway-SGD", M.TripType.ONE_WAY, segs[:1], "SGD"),
+                                       ("round-noCur", M.TripType.ROUND_TRIP, segs, None),
+                                       ("round-SGD", M.TripType.ROUND_TRIP, segs, "SGD")]:
+        try:
+            ff = M.FlightSearchFilters(trip_type=trip, passenger_info=M.PassengerInfo(adults=4, children=3),
+                                       flight_segments=[s_.model_copy() for s_ in segs_use],
+                                       seat_type=M.SeatType.ECONOMY, stops=M.MaxStops.ANY,
+                                       sort_by=M.SortBy.CHEAPEST)
+            sf = SearchFlights()
+            url = with_locale_params(sf.BASE_URL, cur, None, None)
+            r = sf.client.post(url=url, data=f"f.req={ff.encode()}", impersonate="chrome", allow_redirects=True)
+            p("=====", label, r.status_code, len(r.text), url)
+            p(r.text[:600].replace("\n", " "))
+            p("payload None?", parse_first_wrb_payload(r.text) is None)
+            res = SearchFlights().search(ff, top_n=2, currency=cur)
+            p("search ->", type(res), len(res) if res else res)
+            for x in (res or [])[:4]:
+                p("  ", repr(x)[:1500])
+        except Exception:
+            p(traceback.format_exc()[-1500:])
 except Exception:
     p(traceback.format_exc())
 open(os.path.join(out, "probe.txt"), "w").write("\n".join(log))
