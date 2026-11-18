@@ -1,7 +1,7 @@
 # DuckTrader flight bot ✈️
 
 Watches Google Flights prices for **Singapore ⇄ Jeju** (7-night round trips leaving 24 May – 14 Jun 2027,
-4 adults + 3 children, economy) and DMs Tan on Telegram when a price is cheap.
+4 adults + 3 children, economy, **direct flights only**) and DMs Tan on Telegram when a price is cheap.
 
 ## What it does
 | When | What |
@@ -24,7 +24,7 @@ Edit `config.json` on GitHub:
 Saving the file triggers a fresh check automatically.
 
 ## Notes
-- **What it reads (Nov 2026):** Google's page only lists the nonstop Scoot flight for this route to bots; cheaper 1-stop options (e.g. Cathay via HKG) are not visible to it. Prices without an airline + time are ignored. See `checks/` for manual spot checks.
+- **Direct flights only** (`direct_only: true`, Tan's choice 18 Nov 2026). Dates where Google shows no direct flight are listed as "no direct flight", not as errors. Prices without an airline + time are ignored. See `checks/` for manual spot checks.
 - Prices come from Google Flights via the free open-source [fast-flights](https://github.com/AWeirdDev/flights) library. No API key, no cost.
   If Google changes its page the bot DMs a ⚠️ problem notice.
 - Prices are converted to S$ with the free Frankfurter FX rate. Per-person = total ÷ 7 (kids' fares may differ slightly).

@@ -92,6 +92,7 @@ def search(cfg, depart, ret):
                 passengers=Passengers(adults=cfg["adults"], children=cfg["children"],
                                       infants_in_seat=0, infants_on_lap=0),
                 fetch_mode=mode,
+                max_stops=0 if cfg.get("direct_only") else None,
             )
             if res and res.flights:
                 return res
@@ -212,17 +213,22 @@ def main():
         if second_pass and depart not in failed:
             continue
         if i:
-            time.sleep(random.uniform(4, 9))  # be gentle with Google
+            time.sleep(random.uniform(8, 15))  # be gentle with Google
         try:
             res = search(cfg, depart, ret)
             failed.pop(depart, None)
         except Exception as e:
-            failed[depart] = str(e)
+            if "No flights found" in str(e):
+                no_flight.append(depart)
+            else:
+                failed[depart] = str(e)
             continue
         parsed = []
         # Only keep real flights: an airline name AND a departure time. Prices Google
         # shows without them can't be tied to a flight, so they are never used.
         real = [fl for fl in res.flights if (fl.name or "").strip() and (fl.departure or "").strip()]
+        if cfg.get("direct_only"):
+            real = [fl for fl in real if fl.stops == 0]
         if not real:
             no_flight.append(depart)
             continue
@@ -281,7 +287,7 @@ def main():
             if alerts:
                 send_message("🚨 <b>Cheap flight alert</b>\n\n" + "\n\n".join(alerts))
 
-    ok = bool(rows)
+    ok = bool(rows) or (not failed and bool(no_flight))
     if not ok and send:
         last_fail = state.get("last_fail_notice_utc")
         if not last_fail or (now_utc - datetime.fromisoformat(last_fail)) > timedelta(hours=12):

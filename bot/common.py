@@ -107,7 +107,7 @@ def gf_link(cfg, depart, ret):
         tfs = TFSData.from_interface(
             flight_data=[FlightData(date=depart, from_airport=cfg["origin"], to_airport=cfg["destination"]),
                          FlightData(date=ret, from_airport=cfg["destination"], to_airport=cfg["origin"])],
-            trip="round-trip", seat=cfg["seat"],
+            trip="round-trip", seat=cfg["seat"], max_stops=0 if cfg.get("direct_only") else None,
             passengers=Passengers(adults=cfg["adults"], children=cfg["children"],
                                   infants_in_seat=0, infants_on_lap=0)).as_b64().decode()
         return f"https://www.google.com/travel/flights/search?tfs={urllib.parse.quote(tfs)}&hl=en&curr=SGD"

@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from common import DATA, PRICES_CSV, SGT, gf_link, load_config, nice_date, send_message, send_photo
+from common import DATA, LAST_RUN_JSON, PRICES_CSV, load_json, SGT, gf_link, load_config, nice_date, send_message, send_photo
 
 BG, PANEL, GOLD, WHITE, GREY, RED, GREEN = "#17181c", "#22242a", "#f2c14e", "#f5f5f5", "#8a8f98", "#e5484d", "#3fb950"
 DOWS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
@@ -159,6 +159,9 @@ def main():
             lines.append("<i>Small % = small effect. Booking timing matters more than weekday.</i>")
     else:
         lines.append(f"🕒 <b>Best time to buy:</b> needs ~2 weeks of hourly data ({n_days} so far)")
+    nf = load_json(LAST_RUN_JSON, {}).get("dates_without_readable_flight", [])
+    if nf:
+        lines.append("✖️ <b>No direct flight shown on:</b> " + ", ".join(nice_date(d) for d in nf))
     lines.append(f"\n🔗 <a href=\"{gf_link(cfg, best['depart'], best['return'])}\">Cheapest week on Google Flights</a>")
     text = "\n".join(lines)
     print(text)

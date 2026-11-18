@@ -17,5 +17,6 @@
   "realert_min_drop_pct": 2,
   "flights_kept_per_search": 5,
   "full_scan_every_hours": 6,
-  "min_history_days": 3
+  "min_history_days": 3,
+  "direct_only": true
 }
