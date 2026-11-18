@@ -1,0 +1,216 @@
+"""Check Google Flights prices, save them to data/prices.csv and DM alerts.
+
+Modes:
+  full  - every date pair in the window (cheapest-week hunt)
+  focus - planned dates + current cheapest pair (hourly, for the best-time-to-buy study)
+  auto  - full if the last full scan is >= full_scan_every_hours old, else focus
+"""
+import argparse
+import csv
+import os
+import random
+import sys
+import time
+from datetime import date, datetime, timedelta, timezone
+
+from common import (DATA, LAST_RUN_JSON, PRICE_FIELDS, PRICES_CSV, SGT, STATE_JSON,
+                    date_pairs, fx_to_sgd, gf_link, load_config, load_json, nice_date,
+                    parse_price, pax, save_json, send_message)
+
+
+def search(cfg, depart, ret):
+    from fast_flights import FlightData, Passengers, get_flights
+    last_err = None
+    for mode in ("common", "fallback"):
+        try:
+            res = get_flights(
+                flight_data=[
+                    FlightData(date=depart, from_airport=cfg["origin"], to_airport=cfg["destination"]),
+                    FlightData(date=ret, from_airport=cfg["destination"], to_airport=cfg["origin"]),
+                ],
+                trip="round-trip",
+                seat=cfg["seat"],
+                passengers=Passengers(adults=cfg["adults"], children=cfg["children"],
+                                      infants_in_seat=0, infants_on_lap=0),
+                fetch_mode=mode,
+            )
+            if res and res.flights:
+                return res
+            last_err = "no flights returned"
+        except Exception as e:
+            last_err = f"{type(e).__name__}: {e}"
+        print(f"  {depart}: fetch_mode={mode} failed -> {last_err}")
+    raise RuntimeError(last_err)
+
+
+def read_history():
+    if not os.path.exists(PRICES_CSV):
+        return []
+    with open(PRICES_CSV, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def append_rows(rows):
+    os.makedirs(DATA, exist_ok=True)
+    new = not os.path.exists(PRICES_CSV)
+    with open(PRICES_CSV, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=PRICE_FIELDS)
+        if new:
+            w.writeheader()
+        w.writerows(rows)
+
+
+def check_alerts(cfg, state, history, best_now, now_utc):
+    """best_now: {depart: row}. Returns list of alert lines."""
+    alerts = []
+    alerted = state.setdefault("alerted", {})
+    cutoff = (now_utc - timedelta(days=30)).isoformat()
+    target = cfg.get("target_price_per_person_sgd")
+    for depart, row in sorted(best_now.items(), key=lambda kv: float(kv[1]["price_per_person_sgd"])):
+        pp = float(row["price_per_person_sgd"])
+        past = [float(h["price_per_person_sgd"]) for h in history
+                if h["depart"] == depart and h["rank"] == "1" and h["price_per_person_sgd"]]
+        past30 = [float(h["price_per_person_sgd"]) for h in history
+                  if h["depart"] == depart and h["rank"] == "1" and h["price_per_person_sgd"]
+                  and h["checked_at_utc"] >= cutoff]
+        reasons = []
+        if target and pp <= float(target):
+            reasons.append(f"🎯 Under your target of S${float(target):,.0f}/person")
+        if past and pp < min(past) * (1 - cfg["new_low_min_drop_pct"] / 100):
+            reasons.append(f"📉 New lowest price seen (before: S${min(past):,.0f}/person)")
+        if len(past30) >= 8:
+            avg = sum(past30) / len(past30)
+            drop = (1 - pp / avg) * 100
+            if drop >= cfg["drop_vs_30d_avg_pct"]:
+                reasons.append(f"🔥 {drop:.0f}% below the 30-day average (S${avg:,.0f}/person)")
+
+        last = alerted.get(depart)
+        if last and pp > last * 1.10:  # price went back up: allow a fresh alert next drop
+            alerted.pop(depart, None)
+            last = None
+        if not reasons:
+            continue
+        if last and pp > last * (1 - cfg["realert_min_drop_pct"] / 100):
+            continue  # already told you about this price
+        alerted[depart] = pp
+        alerts.append(
+            f"✈️ <b>{nice_date(row['depart'])} → {nice_date(row['return'])}</b>\n"
+            f"💰 <b>S${pp:,.0f}/person</b> · S${float(row['price_total_sgd']):,.0f} total for {pax(cfg)}\n"
+            f"🛫 {row['airline']} · {row['out_departure']} · {row['stops_text']}\n"
+            + "\n".join(reasons) +
+            f"\n🔗 <a href=\"{gf_link(cfg, row['depart'], row['return'])}\">Check &amp; book on Google Flights</a>"
+        )
+    return alerts
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", default="auto", choices=["auto", "full", "focus"])
+    ap.add_argument("--no-telegram", action="store_true")
+    args = ap.parse_args()
+
+    cfg = load_config()
+    state = load_json(STATE_JSON, {})
+    now_utc = datetime.now(timezone.utc).replace(microsecond=0)
+    now_sgt = now_utc.astimezone(SGT)
+
+    mode = args.mode
+    if mode == "auto":
+        last_full = state.get("last_full_scan_utc")
+        age_h = 999 if not last_full else (now_utc - datetime.fromisoformat(last_full)).total_seconds() / 3600
+        mode = "full" if age_h >= cfg["full_scan_every_hours"] - 0.5 else "focus"
+
+    pairs = date_pairs(cfg)
+    if mode == "focus":
+        want = set(cfg.get("focus_departures", []))
+        if state.get("cheapest_depart"):
+            want.add(state["cheapest_depart"])
+        pairs = [p for p in pairs if p[0] in want]
+    print(f"Mode: {mode} · {len(pairs)} date pairs · {now_sgt:%Y-%m-%d %H:%M} SGT")
+
+    history = read_history()
+    first_ever = not history
+    rows, best_now, errors = [], {}, []
+    for i, (depart, ret) in enumerate(pairs):
+        if i:
+            time.sleep(random.uniform(4, 9))  # be gentle with Google
+        try:
+            res = search(cfg, depart, ret)
+        except Exception as e:
+            errors.append(f"{depart}: {e}")
+            continue
+        parsed = []
+        for fl in res.flights:
+            amount, cur = parse_price(fl.price)
+            if amount is None or amount <= 0:
+                continue
+            parsed.append((amount, cur, fl))
+        parsed.sort(key=lambda t: t[0])
+        days_to = (date.fromisoformat(depart) - now_sgt.date()).days
+        for rank, (amount, cur, fl) in enumerate(parsed[: cfg["flights_kept_per_search"]], 1):
+            total_sgd = amount * fx_to_sgd(cur, state)
+            stops = fl.stops if isinstance(fl.stops, int) else str(fl.stops)
+            row = {
+                "checked_at_utc": now_utc.isoformat(), "checked_at_sgt": now_sgt.isoformat(),
+                "check_dow": now_sgt.strftime("%a"), "check_hour_sgt": now_sgt.hour, "mode": mode,
+                "depart": depart, "return": ret, "days_to_departure": days_to, "rank": rank,
+                "airline": fl.name, "out_departure": fl.departure, "out_arrival": fl.arrival,
+                "duration": fl.duration, "stops": stops, "price_raw": fl.price, "currency": cur,
+                "price_total_sgd": round(total_sgd, 2),
+                "price_per_person_sgd": round(total_sgd / pax(cfg), 2),
+                "google_level": getattr(res, "current_price", ""),
+            }
+            rows.append(row)
+            if rank == 1:
+                best_now[depart] = dict(row, rank="1", stops_text=(
+                    "Direct" if stops == 0 else f"{stops} stop{'s' if stops != 1 else ''}"
+                    if isinstance(stops, int) else str(stops)))
+        if best_now.get(depart):
+            print(f"  {depart}→{ret}: S${best_now[depart]['price_per_person_sgd']:,.0f}/person "
+                  f"({best_now[depart]['airline']})")
+
+    if rows:
+        append_rows(rows)
+    if mode == "full" and best_now:
+        state["last_full_scan_utc"] = now_utc.isoformat()
+        cheapest = min(best_now.values(), key=lambda r: r["price_per_person_sgd"])
+        state["cheapest_depart"] = cheapest["depart"]
+
+    send = (not args.no_telegram)
+    if best_now and send:
+        if first_ever:
+            top = sorted(best_now.values(), key=lambda r: r["price_per_person_sgd"])[:5]
+            lines = [f"{i}. <b>{nice_date(r['depart'])} → {nice_date(r['return'])}</b> · "
+                     f"S${r['price_per_person_sgd']:,.0f}/person · {r['airline']}"
+                     for i, r in enumerate(top, 1)]
+            send_message(
+                f"🦆 <b>Flight bot is live: {cfg['trip_name']}</b>\n"
+                f"{cfg['adults']} adults + {cfg['children']} kids · {cfg['nights']} nights · economy\n\n"
+                f"<b>Cheapest weeks right now</b>\n" + "\n".join(lines) +
+                "\n\nI'll DM you when a price drops to a new low or is unusually cheap. "
+                "Weekly report every Sunday evening.")
+        else:
+            alerts = check_alerts(cfg, state, history, best_now, now_utc)
+            if alerts:
+                send_message("🚨 <b>Cheap flight alert</b>\n\n" + "\n\n".join(alerts))
+
+    ok = bool(rows)
+    if not ok and send:
+        last_fail = state.get("last_fail_notice_utc")
+        if not last_fail or (now_utc - datetime.fromisoformat(last_fail)) > timedelta(hours=12):
+            send_message("⚠️ <b>Flight bot problem</b>\nCouldn't read any prices this run. "
+                         "Google Flights may have changed or blocked the check. I'll keep retrying.\n\n"
+                         + "\n".join(errors[:3]))
+            state["last_fail_notice_utc"] = now_utc.isoformat()
+
+    save_json(STATE_JSON, state)
+    save_json(LAST_RUN_JSON, {
+        "run_at_sgt": now_sgt.isoformat(), "mode": mode, "pairs_checked": len(pairs),
+        "pairs_ok": len(best_now), "rows_saved": len(rows), "errors": errors[:10], "ok": ok,
+    })
+    print(f"Done: {len(best_now)}/{len(pairs)} ok, {len(rows)} rows, {len(errors)} errors")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

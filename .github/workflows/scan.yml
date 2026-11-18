@@ -1,0 +1,46 @@
+name: Flight price scan
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # every hour (full sweep of all weeks every 6h, planned dates every hour)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto / full / focus"
+        default: "auto"
+  push:
+    branches: [main]
+    paths: ["config.json", "bot/**", "requirements.txt"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flight-data
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Check prices
+        env:
+          FLIGHT_BOT_TOKEN: ${{ secrets.FLIGHT_BOT_TOKEN }}
+          FLIGHT_CHAT_ID: ${{ secrets.FLIGHT_CHAT_ID }}
+        run: python bot/scan.py --mode "${{ github.event.inputs.mode || 'auto' }}"
+      - name: Save price history
+        if: always()
+        run: |
+          git config user.name "ducktrader-flight-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "prices $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done

@@ -1,0 +1,18 @@
+{
+  "trip_name": "Singapore ⇄ Jeju",
+  "origin": "SIN",
+  "destination": "CJU",
+  "depart_from": "2027-05-24",
+  "depart_to": "2027-06-14",
+  "nights": 7,
+  "adults": 4,
+  "children": 3,
+  "seat": "economy",
+  "focus_departures": ["2027-06-01"],
+  "target_price_per_person_sgd": null,
+  "drop_vs_30d_avg_pct": 15,
+  "new_low_min_drop_pct": 1,
+  "realert_min_drop_pct": 2,
+  "flights_kept_per_search": 5,
+  "full_scan_every_hours": 6
+}
