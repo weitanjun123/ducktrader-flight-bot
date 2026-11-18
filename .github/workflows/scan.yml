@@ -1,19 +1,26 @@
 name: Flight price scan
 
+# Reliable hourly checks: GitHub's own cron often skips runs on new repos, so each run
+# checks prices once an hour for ~5 hours, then starts the next run itself.
+# The cron below is only a backup that restarts the chain if it ever stops.
 on:
   schedule:
-    - cron: "17 * * * *"   # every hour (full sweep of all weeks every 6h, planned dates every hour)
+    - cron: "17 */3 * * *"
   workflow_dispatch:
     inputs:
       mode:
         description: "auto / full / focus"
         default: "auto"
+      loops:
+        description: "how many hourly checks this run does"
+        default: "5"
   push:
     branches: [main]
     paths: ["config.json", "bot/**", "requirements.txt"]
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: flight-data
@@ -22,7 +29,7 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,17 +37,34 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Check prices
+      - name: Hourly price checks
         env:
           FLIGHT_BOT_TOKEN: ${{ secrets.FLIGHT_BOT_TOKEN }}
           FLIGHT_CHAT_ID: ${{ secrets.FLIGHT_CHAT_ID }}
-        run: python bot/scan.py --mode "${{ github.event_name == 'push' && 'full' || github.event.inputs.mode || 'auto' }}"
-      - name: Save price history
-        if: always()
+          MODE: ${{ github.event_name == 'push' && 'full' || github.event.inputs.mode || 'auto' }}
+          LOOPS: ${{ github.event_name == 'push' && '1' || github.event.inputs.loops || '5' }}
         run: |
           git config user.name "ducktrader-flight-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/
-          git diff --cached --quiet && exit 0
-          git commit -m "prices $(date -u +%Y-%m-%dT%H:%MZ)"
-          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
+          for i in $(seq 1 "$LOOPS"); do
+            git pull --rebase -q || true
+            python bot/scan.py --mode "$MODE" || echo "scan reported a problem"
+            MODE=auto
+            git add data/
+            if ! git diff --cached --quiet; then
+              git commit -qm "prices $(date -u +%Y-%m-%dT%H:%MZ)"
+              for t in 1 2 3; do git pull --rebase -q && git push -q && break; sleep 5; done
+            fi
+            if [ "$i" -lt "$LOOPS" ]; then
+              now=$(date +%s); next=$(( (now/3600 + 1)*3600 + 17*60 ))
+              echo "sleeping $(( (next-now)/60 )) min until next check"; sleep $(( next-now ))
+            fi
+          done
+      - name: Start the next run
+        if: always() && github.event_name != 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # skip if another run is already queued (the chain is alive)
+          q=$(gh run list -R "$GITHUB_REPOSITORY" -w scan.yml -s queued --json databaseId -q 'length')
+          if [ "${q:-0}" = "0" ]; then gh workflow run scan.yml -R "$GITHUB_REPOSITORY" -r main; fi
