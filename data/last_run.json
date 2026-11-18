@@ -1,0 +1,20 @@
+{
+  "run_at_sgt": "2026-11-18T10:10:20+08:00",
+  "mode": "full",
+  "pairs_checked": 22,
+  "pairs_ok": 0,
+  "rows_saved": 0,
+  "errors": [
+    "2027-05-24: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-25: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-26: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-27: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-28: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-29: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-30: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-05-31: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-06-01: BuilderError: Invalid impersonate: \"chrome_126\"",
+    "2027-06-02: BuilderError: Invalid impersonate: \"chrome_126\""
+  ],
+  "ok": false
+}
