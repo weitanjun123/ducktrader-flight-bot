@@ -15,7 +15,8 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.11", cache: pip}
       - run: pip install -r requirements.txt
-      - run: python bot/dump.py
+      - run: pip install flights
+      - run: python bot/probe.py
       - run: |
           git config user.name "ducktrader-flight-bot"; git config user.email "actions@users.noreply.github.com"
           git add checks/; git commit -qm "debug dump" || exit 0
