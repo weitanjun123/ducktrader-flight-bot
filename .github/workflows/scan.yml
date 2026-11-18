@@ -34,7 +34,7 @@ jobs:
         env:
           FLIGHT_BOT_TOKEN: ${{ secrets.FLIGHT_BOT_TOKEN }}
           FLIGHT_CHAT_ID: ${{ secrets.FLIGHT_CHAT_ID }}
-        run: python bot/scan.py --mode "${{ github.event.inputs.mode || 'auto' }}"
+        run: python bot/scan.py --mode "${{ github.event_name == 'push' && 'full' || github.event.inputs.mode || 'auto' }}"
       - name: Save price history
         if: always()
         run: |

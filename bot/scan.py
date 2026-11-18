@@ -57,13 +57,18 @@ def _patch_primp():
         raise RuntimeError("no usable primp browser profile")
 
     import importlib
-    for name in ("fast_flights.core", "fast_flights.primp", "fast_flights"):
+    import pkgutil
+    import sys as _sys
+    for info in pkgutil.walk_packages(fast_flights.__path__, "fast_flights."):
         try:
-            mod = importlib.import_module(name)
-        except ImportError:
-            continue
-        if getattr(mod, "Client", None) is real:
-            mod.Client = client
+            importlib.import_module(info.name)
+        except Exception:
+            pass
+    for name, mod in list(_sys.modules.items()):
+        if name.startswith("fast_flights") and mod is not None:
+            for attr, val in list(vars(mod).items()):
+                if val is real:
+                    setattr(mod, attr, client)
     primp.Client = client
     _PATCHED = True
 
@@ -72,7 +77,7 @@ def search(cfg, depart, ret):
     from fast_flights import FlightData, Passengers, get_flights
     _patch_primp()
     last_err = None
-    for mode in ("common", "fallback"):
+    for mode in ("common", "common", "common", "fallback"):
         try:
             res = get_flights(
                 flight_data=[
@@ -91,6 +96,7 @@ def search(cfg, depart, ret):
         except Exception as e:
             last_err = f"{type(e).__name__}: {e}"
         print(f"  {depart}: fetch_mode={mode} failed -> {last_err}")
+        time.sleep(2)
     raise RuntimeError(last_err)
 
 
@@ -191,7 +197,10 @@ def main():
             errors.append(f"{depart}: {e}")
             continue
         parsed = []
-        for fl in res.flights:
+        named = [fl for fl in res.flights if (fl.name or "").strip()]
+        for fl in (named or res.flights):
+            if not (fl.name or "").strip():
+                fl.name = "Airline not shown"
             amount, cur = parse_price(fl.price)
             if amount is None or amount <= 0:
                 continue
