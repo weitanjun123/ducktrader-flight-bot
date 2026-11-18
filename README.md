@@ -8,7 +8,7 @@ Watches Google Flights prices for **Singapore ⇄ Jeju** (7-night round trips le
 |---|---|
 | Every 6 hours | Checks **all 22 departure dates** → finds the cheapest week |
 | Every hour | Checks your planned dates (**1–8 Jun**) + the current cheapest week → builds the "best time to buy" study |
-| Any check | 🚨 DM if a price is a **new low**, **15%+ below its 30-day average**, or under your **target price** |
+| Any check | 🚨 DM only on a real low: **cheapest price of any week so far**, **lowest yet for your planned 1–8 Jun dates**, **15%+ below that week's 30-day average**, or under your **target price**. Lows need 3+ days of history first. |
 | Sunday 18:37 SGT | 📊 Weekly report: cheapest week, best day/hour to buy heatmap, price trend |
 
 Every check is saved in `data/prices.csv` (time checked, days before departure, airline, price in S$).
@@ -24,6 +24,7 @@ Edit `config.json` on GitHub:
 Saving the file triggers a fresh check automatically.
 
 ## Notes
+- **What it reads (Nov 2026):** Google's page only lists the nonstop Scoot flight for this route to bots; cheaper 1-stop options (e.g. Cathay via HKG) are not visible to it. Prices without an airline + time are ignored. See `checks/` for manual spot checks.
 - Prices come from Google Flights via the free open-source [fast-flights](https://github.com/AWeirdDev/flights) library. No API key, no cost.
   If Google changes its page the bot DMs a ⚠️ problem notice.
 - Prices are converted to S$ with the free Frankfurter FX rate. Per-person = total ÷ 7 (kids' fares may differ slightly).

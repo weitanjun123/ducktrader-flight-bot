@@ -100,9 +100,20 @@ def fx_to_sgd(currency, state):
 
 # ---------- links ----------
 def gf_link(cfg, depart, ret):
-    q = (f"Flights from {cfg['origin']} to {cfg['destination']} on {depart} through {ret} "
-         f"for {cfg['adults']} adults and {cfg['children']} children")
-    return "https://www.google.com/travel/flights?q=" + urllib.parse.quote(q) + "&curr=SGD"
+    """Google Flights link that opens exactly the bot's search (route, dates, 7 passengers)."""
+    try:
+        from fast_flights import FlightData, Passengers
+        from fast_flights.filter import TFSData
+        tfs = TFSData.from_interface(
+            flight_data=[FlightData(date=depart, from_airport=cfg["origin"], to_airport=cfg["destination"]),
+                         FlightData(date=ret, from_airport=cfg["destination"], to_airport=cfg["origin"])],
+            trip="round-trip", seat=cfg["seat"],
+            passengers=Passengers(adults=cfg["adults"], children=cfg["children"],
+                                  infants_in_seat=0, infants_on_lap=0)).as_b64().decode()
+        return f"https://www.google.com/travel/flights/search?tfs={urllib.parse.quote(tfs)}&hl=en&curr=SGD"
+    except Exception as e:
+        print("link build failed", e)
+        return "https://www.google.com/travel/flights?hl=en&curr=SGD"
 
 
 def nice_date(iso):

@@ -79,7 +79,7 @@ def search(cfg, depart, ret):
     last_err = None
     # "fallback" (a remote browser service) now blocks bots, so retry the direct fetch.
     errs = []
-    for attempt in range(4):
+    for attempt in range(2):
         mode = "common"
         try:
             res = get_flights(
@@ -122,28 +122,36 @@ def append_rows(rows):
 
 
 def check_alerts(cfg, state, history, best_now, now_utc):
-    """best_now: {depart: row}. Returns list of alert lines."""
+    """Alert only on real lows (see README). best_now: {depart: row}."""
     alerts = []
     alerted = state.setdefault("alerted", {})
     cutoff = (now_utc - timedelta(days=30)).isoformat()
     target = cfg.get("target_price_per_person_sgd")
+    focus = set(cfg.get("focus_departures", []))
+    r1 = [h for h in history if h["rank"] == "1" and h.get("price_per_person_sgd")]
+    days_of_history = len({h["checked_at_sgt"][:10] for h in r1})
+    enough = days_of_history >= cfg.get("min_history_days", 3)
+    overall_low_before = min((float(h["price_per_person_sgd"]) for h in r1), default=None)
+    cheapest_now = min(best_now, key=lambda d: float(best_now[d]["price_per_person_sgd"]))
+
     for depart, row in sorted(best_now.items(), key=lambda kv: float(kv[1]["price_per_person_sgd"])):
         pp = float(row["price_per_person_sgd"])
-        past = [float(h["price_per_person_sgd"]) for h in history
-                if h["depart"] == depart and h["rank"] == "1" and h["price_per_person_sgd"]]
-        past30 = [float(h["price_per_person_sgd"]) for h in history
-                  if h["depart"] == depart and h["rank"] == "1" and h["price_per_person_sgd"]
-                  and h["checked_at_utc"] >= cutoff]
+        past = [float(h["price_per_person_sgd"]) for h in r1 if h["depart"] == depart]
+        past30 = [float(h["price_per_person_sgd"]) for h in r1
+                  if h["depart"] == depart and h["checked_at_utc"] >= cutoff]
+        drop = cfg["new_low_min_drop_pct"] / 100
         reasons = []
         if target and pp <= float(target):
             reasons.append(f"🎯 Under your target of S${float(target):,.0f}/person")
-        if past and pp < min(past) * (1 - cfg["new_low_min_drop_pct"] / 100):
-            reasons.append(f"📉 New lowest price seen (before: S${min(past):,.0f}/person)")
-        if len(past30) >= 8:
+        if enough and depart == cheapest_now and overall_low_before and pp < overall_low_before * (1 - drop):
+            reasons.append(f"🏆 Cheapest price of ANY week so far (before: S${overall_low_before:,.0f}/person)")
+        if enough and depart in focus and past and pp < min(past) * (1 - drop):
+            reasons.append(f"📉 Lowest price yet for your planned dates (before: S${min(past):,.0f}/person)")
+        if enough and len(past30) >= 8:
             avg = sum(past30) / len(past30)
-            drop = (1 - pp / avg) * 100
-            if drop >= cfg["drop_vs_30d_avg_pct"]:
-                reasons.append(f"🔥 {drop:.0f}% below the 30-day average (S${avg:,.0f}/person)")
+            pct = (1 - pp / avg) * 100
+            if pct >= cfg["drop_vs_30d_avg_pct"]:
+                reasons.append(f"🔥 {pct:.0f}% below this week's 30-day average (S${avg:,.0f}/person)")
 
         last = alerted.get(depart)
         if last and pp > last * 1.10:  # price went back up: allow a fresh alert next drop
@@ -156,10 +164,10 @@ def check_alerts(cfg, state, history, best_now, now_utc):
         alerted[depart] = pp
         alerts.append(
             f"✈️ <b>{nice_date(row['depart'])} → {nice_date(row['return'])}</b>\n"
-            f"💰 <b>S${pp:,.0f}/person</b> · S${float(row['price_total_sgd']):,.0f} total for {pax(cfg)}\n"
-            f"🛫 {row['airline']} · {row['out_departure']} · {row['stops_text']}\n"
+            f"💰 <b>S${pp:,.0f}/person</b> · S${float(row['price_total_sgd']):,.0f} return for all {pax(cfg)}\n"
+            f"🛫 {row['airline']} · departs {row['out_departure'].split(' on ')[0]} · {row['stops_text']}\n"
             + "\n".join(reasons) +
-            f"\n🔗 <a href=\"{gf_link(cfg, row['depart'], row['return'])}\">Check &amp; book on Google Flights</a>"
+            f"\n🔗 <a href=\"{gf_link(cfg, row['depart'], row['return'])}\">Open this search on Google Flights</a>"
         )
     return alerts
 
@@ -192,8 +200,9 @@ def main():
     history = read_history()
     first_ever = not history
     rows, best_now, errors = [], {}, []
-    queue = list(pairs) + [None] + list(pairs)  # second pass retries dates that failed
+    queue = list(pairs)
     failed = {}
+    no_flight = []
     second_pass = False
     for i, item in enumerate(queue):
         if item is None:
@@ -211,10 +220,13 @@ def main():
             failed[depart] = str(e)
             continue
         parsed = []
-        named = [fl for fl in res.flights if (fl.name or "").strip()]
-        for fl in (named or res.flights):
-            if not (fl.name or "").strip():
-                fl.name = "Airline not shown"
+        # Only keep real flights: an airline name AND a departure time. Prices Google
+        # shows without them can't be tied to a flight, so they are never used.
+        real = [fl for fl in res.flights if (fl.name or "").strip() and (fl.departure or "").strip()]
+        if not real:
+            no_flight.append(depart)
+            continue
+        for fl in real:
             amount, cur = parse_price(fl.price)
             if amount is None or amount <= 0:
                 continue
@@ -282,6 +294,7 @@ def main():
     save_json(LAST_RUN_JSON, {
         "run_at_sgt": now_sgt.isoformat(), "mode": mode, "pairs_checked": len(pairs),
         "pairs_ok": len(best_now), "rows_saved": len(rows), "errors": errors[:10], "ok": ok,
+        "dates_without_readable_flight": no_flight,
     })
     print(f"Done: {len(best_now)}/{len(pairs)} ok, {len(rows)} rows, {len(errors)} errors")
     return 0 if ok else 1
