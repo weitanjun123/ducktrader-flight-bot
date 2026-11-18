@@ -13,3 +13,12 @@ Screenshot from Tan's phone: `2026-11-18_google_24-31May_screenshot.png`
 
 Finding: prices are round-trip totals for all 7 (correct), but the parser only read the
 nonstop flight and missed cheaper 1-stop itineraries. Fix in progress.
+
+### Follow-up (18 Nov, 19:30)
+- Raw Google page saved by the bot (debug run) only contains the Scoot nonstop; connecting
+  flights load later in the browser, so the HTML scraper can't see them.
+- Tried the `fli` library (Google's GetShoppingResults API): most calls from GitHub's servers
+  got an error response; the one that worked also only returned Scoot (`checks/probe/probe.txt`).
+- 19:28 full scan read only 5 of 22 dates ("No flights found" pages) — Google blocks/limits
+  repeated requests from GitHub's servers.
+- Bad "Airline not shown" rows removed from data/prices.csv; correction sent on Telegram.
