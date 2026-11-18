@@ -18,8 +18,59 @@ from common import (DATA, LAST_RUN_JSON, PRICE_FIELDS, PRICES_CSV, SGT, STATE_JS
                     parse_price, pax, save_json, send_message)
 
 
+_PATCHED = False
+
+
+def _patch_primp():
+    """fast-flights asks primp for the browser profile "chrome_126", which newer primp
+    versions removed. Wrap primp.Client so it falls back to a profile that exists."""
+    global _PATCHED
+    if _PATCHED:
+        return
+    import primp
+    import fast_flights
+    real = primp.Client
+    fallbacks = ["chrome_133", "chrome_131", "chrome_130", "chrome_128", "chrome_127",
+                 "chrome_126", "chrome", "random", None]
+
+    good = {}
+
+    def client(*a, **kw):
+        want = kw.get("impersonate")
+        order = [want] + [f for f in fallbacks if f != want]
+        if "imp" in good:
+            order.insert(0, good["imp"])
+        for imp in order:
+            try:
+                if imp is None:
+                    kw.pop("impersonate", None)
+                else:
+                    kw["impersonate"] = imp
+                c = real(*a, **kw)
+                good["imp"] = imp
+                if imp != want:
+                    print(f"  (using browser profile {imp!r} instead of {want!r})")
+                return c
+            except Exception as e:
+                if "impersonate" not in str(e).lower():
+                    raise
+        raise RuntimeError("no usable primp browser profile")
+
+    import importlib
+    for name in ("fast_flights.core", "fast_flights.primp", "fast_flights"):
+        try:
+            mod = importlib.import_module(name)
+        except ImportError:
+            continue
+        if getattr(mod, "Client", None) is real:
+            mod.Client = client
+    primp.Client = client
+    _PATCHED = True
+
+
 def search(cfg, depart, ret):
     from fast_flights import FlightData, Passengers, get_flights
+    _patch_primp()
     last_err = None
     for mode in ("common", "fallback"):
         try:
