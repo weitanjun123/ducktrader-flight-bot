@@ -1,0 +1,51 @@
+{
+  "version": "?",
+  "exports": [
+    "Airport",
+    "Cookies",
+    "Flight",
+    "FlightData",
+    "Passengers",
+    "Result",
+    "TFSData",
+    "__all__",
+    "__builtins__",
+    "__cached__",
+    "__doc__",
+    "__file__",
+    "__loader__",
+    "__name__",
+    "__package__",
+    "__path__",
+    "__spec__",
+    "_generated_enum",
+    "cookies_impl",
+    "cookies_pb2",
+    "core",
+    "create_filter",
+    "fallback_playwright",
+    "filter",
+    "flights_impl",
+    "flights_pb2",
+    "get_flights",
+    "get_flights_from_filter",
+    "primp",
+    "schema",
+    "search",
+    "search_airport"
+  ],
+  "2027-05-24": {
+    "tfs": "GhoSCjIwMjctMDUtMjRqBRIDU0lOcgUSA0NKVRoaEgoyMDI3LTA1LTMxagUSA0NKVXIFEgNTSU5CBwEBAQECAgJIAZgBAQ==",
+    "SGD": {
+      "status": 200,
+      "len": 2032534
+    }
+  },
+  "2027-05-27": {
+    "tfs": "GhoSCjIwMjctMDUtMjdqBRIDU0lOcgUSA0NKVRoaEgoyMDI3LTA2LTAzagUSA0NKVXIFEgNTSU5CBwEBAQECAgJIAZgBAQ==",
+    "SGD": {
+      "status": 200,
+      "len": 1967069
+    }
+  }
+}
