@@ -2,4 +2,20 @@ search sig: (self, filters: 'FlightSearchFilters', top_n: 'int' = 5, currency: '
 PassengerInfo fields: dict_keys(['adults', 'children', 'infants_in_seat', 'infants_on_lap'])
 FlightSearchFilters fields: dict_keys(['trip_type', 'passenger_info', 'flight_segments', 'stops', 'seat_type', 'price_limit', 'airlines', 'airlines_exclude', 'alliances', 'alliances_exclude', 'max_duration', 'layover_restrictions', 'sort_by', 'exclude_basic_economy', 'emissions', 'bags', 'show_all_results'])
 FlightSegment fields: dict_keys(['departure_airport', 'arrival_airport', 'travel_date', 'time_restrictions', 'selected_flight'])
-type: <class 'NoneType'> len: None
+===== oneway-noCur 200 325 https://www.google.com/_/FlightsFrontendUi/data/travel.frontend.flights.FlightsFrontendService/GetShoppingResults
+)]}'  [["wrb.fr",null,null,null,null,[13,null,[["type.googleapis.com/travel.frontend.flights.ErrorResponse",[[null,[[1795001189028716,54782924,1528219413],null,null,null,null,[[0]]],0,"ZYv9aqzgAczXj8oPlY7b2AU","Hj6XTzA03ZMoAEFJXgBG---------oycx18AAAAAGr9i2UAnjjiA"],0]]]]],["di",64],["af.httprm",64,"8035627562823786086",14]]
+payload None? True
+search -> <class 'NoneType'> None
+===== oneway-SGD 200 325 https://www.google.com/_/FlightsFrontendUi/data/travel.frontend.flights.FlightsFrontendService/GetShoppingResults?curr=SGD
+)]}'  [["wrb.fr",null,null,null,null,[13,null,[["type.googleapis.com/travel.frontend.flights.ErrorResponse",[[null,[[1795001189226420,54780610,3124538194],null,null,null,null,[[0]]],0,"ZYv9avToDcLFj8oP0tby0Qs","HzzetsPqGrdQAEnbBgBG---------okbjx7AAAAAGr9i2UDkbkWA"],0]]]]],["di",54],["af.httprm",54,"1438903418689984069",16]]
+payload None? True
+search -> <class 'list'> 1
+   FlightResult(legs=[FlightLeg(airline=<Airline.TR: 'Scoot'>, flight_number='828', departure_airport=<Airport.SIN: 'Singapore Changi International Airport'>, arrival_airport=<Airport.CJU: 'Jeju International Airport'>, departure_datetime=datetime.datetime(2027, 5, 24, 0, 35), arrival_datetime=datetime.datetime(2027, 5, 24, 7, 25), duration=350, departure_airport_name='Singapore Changi Airport', arrival_airport_name='Jeju International Airport', operating_airline=None, operating_flight_number=None, aircraft='Airbus A320neo', legroom='28 inches', legroom_short='28 in', amenities=None, overnight=False, co2_emissions_g=1914619)], price=3227.0, currency='SGD', duration=350, stops=0, layovers=None, co2_emissions_g=1915000, co2_emissions_typical_g=2526000, co2_emissions_delta_pct=-24, emissions_tag='typical', self_transfer=False, mixed_cabin=False, primary_airline=<Airline.TR: 'Scoot'>, primary_airline_name='Scoot', booking_token='["CAISA1NHRBoECIzZEyJ2ClsKWQoDU0lOEhkyMDI3LTA1LTI0VDAwOjM1OjAwKzA4OjAwGgNDSlUiGTIwMjctMDUtMjRUMDc6MjU6MDArMDk6MDAqAlRSMgM4Mjg6AlRSQgM4MjhIAVIDMzJOEgQIAxAEEgQIAhADGAEoADIHCgVTY29vdCoGQ2hyb21l"]')
+===== round-noCur 200 325 https://www.google.com/_/FlightsFrontendUi/data/travel.frontend.flights.FlightsFrontendService/GetShoppingResults
+)]}'  [["wrb.fr",null,null,null,null,[13,null,[["type.googleapis.com/travel.frontend.flights.ErrorResponse",[[null,[[1795001197890913,54782924,1528219413],null,null,null,null,[[0]]],0,"bYv9aqGwNszXj8oPlY7b2AU","HBhw0vpiO9i4AElpXABG------okxq21-n1AAAAAGr9i20Nc6U-A"],0]]]]],["di",62],["af.httprm",61,"8465307777955574627",14]]
+payload None? True
+search -> <class 'NoneType'> None
+===== round-SGD 200 326 https://www.google.com/_/FlightsFrontendUi/data/travel.frontend.flights.FlightsFrontendService/GetShoppingResults?curr=SGD
+)]}'  [["wrb.fr",null,null,null,null,[13,null,[["type.googleapis.com/travel.frontend.flights.ErrorResponse",[[null,[[1795001198061151,54784431,2013527105],null,null,null,null,[[0]]],0,"bov9at_dA6_jj8oPwfiPwAc","HDBR5f-pJnv4AEbs3ABG------oktm13-n2AAAAAGr9i24BGM2-A"],0]]]]],["di",56],["af.httprm",55,"-7703389771656084800",15]]
+payload None? True
+search -> <class 'NoneType'> None
