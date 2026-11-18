@@ -201,17 +201,21 @@ def main():
     history = read_history()
     first_ever = not history
     rows, best_now, errors = [], {}, []
-    queue = list(pairs)
+    queue = list(pairs) + [None] + list(pairs)  # second pass for dates Google didn't show
     failed = {}
     no_flight = []
     second_pass = False
     for i, item in enumerate(queue):
         if item is None:
             second_pass = True
+            if failed or no_flight:
+                time.sleep(60)
             continue
         depart, ret = item
-        if second_pass and depart not in failed:
+        if second_pass and depart not in failed and depart not in no_flight:
             continue
+        if second_pass and depart in no_flight:
+            no_flight.remove(depart)
         if i:
             time.sleep(random.uniform(8, 15))  # be gentle with Google
         try:
@@ -262,6 +266,13 @@ def main():
                   f"({best_now[depart]['airline']})")
 
     errors = [f"{d}: {e}" for d, e in failed.items()]
+    # A date only counts as "no direct flight" if no scan has ever read a flight for it.
+    ever = {h["depart"] for h in history if h["rank"] == "1"}
+    seen = state.setdefault("unread_counts", {})
+    for d in no_flight:
+        seen[d] = seen.get(d, 0) + 1
+    no_direct = sorted(d for d in no_flight if d not in ever and seen.get(d, 0) >= 3)
+    not_read = sorted(d for d in no_flight if d not in no_direct)
     if rows:
         append_rows(rows)
     if mode == "full" and best_now:
@@ -300,7 +311,7 @@ def main():
     save_json(LAST_RUN_JSON, {
         "run_at_sgt": now_sgt.isoformat(), "mode": mode, "pairs_checked": len(pairs),
         "pairs_ok": len(best_now), "rows_saved": len(rows), "errors": errors[:10], "ok": ok,
-        "dates_without_readable_flight": no_flight,
+        "dates_no_direct_flight": no_direct, "dates_not_read_this_run": not_read,
     })
     print(f"Done: {len(best_now)}/{len(pairs)} ok, {len(rows)} rows, {len(errors)} errors")
     return 0 if ok else 1

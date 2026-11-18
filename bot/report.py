@@ -35,8 +35,11 @@ def footer(fig, n_days):
 
 
 def chart_cheapest_week(df, path):
-    last_full = df[df["mode"] == "full"]["checked_at_utc"].max()
-    snap = df[(df["checked_at_utc"] == last_full) & (df["rank"] == 1)].sort_values("depart")
+    # Latest price per departure date seen in the last 24h (Google doesn't show every date every run)
+    r1 = df[df["rank"] == 1].copy()
+    r1["ts"] = pd.to_datetime(r1["checked_at_utc"])
+    r1 = r1[r1["ts"] >= r1["ts"].max() - pd.Timedelta(hours=24)]
+    snap = r1.sort_values("ts").groupby("depart").tail(1).sort_values("depart")
     low = df[df["rank"] == 1].groupby("depart")["price_per_person_sgd"].min()
     fig, ax = plt.subplots(figsize=(10, 5.2), dpi=110)
     style(ax, fig)
@@ -159,7 +162,7 @@ def main():
             lines.append("<i>Small % = small effect. Booking timing matters more than weekday.</i>")
     else:
         lines.append(f"🕒 <b>Best time to buy:</b> needs ~2 weeks of hourly data ({n_days} so far)")
-    nf = load_json(LAST_RUN_JSON, {}).get("dates_without_readable_flight", [])
+    nf = load_json(LAST_RUN_JSON, {}).get("dates_no_direct_flight", [])
     if nf:
         lines.append("✖️ <b>No direct flight shown on:</b> " + ", ".join(nice_date(d) for d in nf))
     lines.append(f"\n🔗 <a href=\"{gf_link(cfg, best['depart'], best['return'])}\">Cheapest week on Google Flights</a>")
