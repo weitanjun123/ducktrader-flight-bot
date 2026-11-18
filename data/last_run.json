@@ -1,24 +1,26 @@
 {
-  "run_at_sgt": "2026-11-18T19:28:28+08:00",
+  "run_at_sgt": "2026-11-18T19:41:35+08:00",
   "mode": "full",
   "pairs_checked": 22,
-  "pairs_ok": 5,
-  "rows_saved": 5,
-  "errors": [
-    "2027-05-26: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-05-27: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-05-28: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-05-29: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-05-31: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-06-02: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-06-03: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-06-04: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-06-05: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight  | RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight ",
-    "2027-06-06: RuntimeError: No flights found:\nSkip to main contentAccessibility feedback\nExplore\nFlights\nHotels\nVacation rentals\nChange appearance\n[Sign in][1]\nExplore\nFlights\nHotels\nVacation rentals\nFlight Deals\nTracked flight "
-  ],
+  "pairs_ok": 7,
+  "rows_saved": 7,
+  "errors": [],
   "ok": true,
   "dates_without_readable_flight": [
+    "2027-05-25",
+    "2027-05-26",
+    "2027-05-27",
+    "2027-05-28",
+    "2027-05-29",
     "2027-05-30",
-    "2027-06-01"
+    "2027-05-31",
+    "2027-06-01",
+    "2027-06-03",
+    "2027-06-05",
+    "2027-06-07",
+    "2027-06-10",
+    "2027-06-12",
+    "2027-06-13",
+    "2027-06-14"
   ]
 }
