@@ -1,0 +1,22 @@
+name: Debug dump
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: flight-data
+  cancel-in-progress: false
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11", cache: pip}
+      - run: pip install -r requirements.txt
+      - run: python bot/dump.py
+      - run: |
+          git config user.name "ducktrader-flight-bot"; git config user.email "actions@users.noreply.github.com"
+          git add checks/; git commit -qm "debug dump" || exit 0
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
