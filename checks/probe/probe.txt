@@ -1,0 +1,5 @@
+search sig: (self, filters: 'FlightSearchFilters', top_n: 'int' = 5, currency: 'str | None' = None, language: 'str | None' = None, country: 'str | None' = None) -> 'list[FlightResult | tuple[FlightResult, ...]] | None'
+PassengerInfo fields: dict_keys(['adults', 'children', 'infants_in_seat', 'infants_on_lap'])
+FlightSearchFilters fields: dict_keys(['trip_type', 'passenger_info', 'flight_segments', 'stops', 'seat_type', 'price_limit', 'airlines', 'airlines_exclude', 'alliances', 'alliances_exclude', 'max_duration', 'layover_restrictions', 'sort_by', 'exclude_basic_economy', 'emissions', 'bags', 'show_all_results'])
+FlightSegment fields: dict_keys(['departure_airport', 'arrival_airport', 'travel_date', 'time_restrictions', 'selected_flight'])
+type: <class 'NoneType'> len: None
