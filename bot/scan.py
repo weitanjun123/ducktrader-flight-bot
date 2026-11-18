@@ -77,7 +77,10 @@ def search(cfg, depart, ret):
     from fast_flights import FlightData, Passengers, get_flights
     _patch_primp()
     last_err = None
-    for mode in ("common", "common", "common", "fallback"):
+    # "fallback" (a remote browser service) now blocks bots, so retry the direct fetch.
+    errs = []
+    for attempt in range(4):
+        mode = "common"
         try:
             res = get_flights(
                 flight_data=[
@@ -94,10 +97,11 @@ def search(cfg, depart, ret):
                 return res
             last_err = "no flights returned"
         except Exception as e:
-            last_err = f"{type(e).__name__}: {e}"
-        print(f"  {depart}: fetch_mode={mode} failed -> {last_err}")
-        time.sleep(2)
-    raise RuntimeError(last_err)
+            last_err = f"{type(e).__name__}: {str(e)[:200]}"
+        errs.append(last_err)
+        print(f"  {depart}: try {attempt + 1} failed -> {last_err}")
+        time.sleep(random.uniform(5, 12))
+    raise RuntimeError(" | ".join(dict.fromkeys(errs)))
 
 
 def read_history():
@@ -188,13 +192,23 @@ def main():
     history = read_history()
     first_ever = not history
     rows, best_now, errors = [], {}, []
-    for i, (depart, ret) in enumerate(pairs):
+    queue = list(pairs) + [None] + list(pairs)  # second pass retries dates that failed
+    failed = {}
+    second_pass = False
+    for i, item in enumerate(queue):
+        if item is None:
+            second_pass = True
+            continue
+        depart, ret = item
+        if second_pass and depart not in failed:
+            continue
         if i:
             time.sleep(random.uniform(4, 9))  # be gentle with Google
         try:
             res = search(cfg, depart, ret)
+            failed.pop(depart, None)
         except Exception as e:
-            errors.append(f"{depart}: {e}")
+            failed[depart] = str(e)
             continue
         parsed = []
         named = [fl for fl in res.flights if (fl.name or "").strip()]
@@ -229,6 +243,7 @@ def main():
             print(f"  {depart}→{ret}: S${best_now[depart]['price_per_person_sgd']:,.0f}/person "
                   f"({best_now[depart]['airline']})")
 
+    errors = [f"{d}: {e}" for d, e in failed.items()]
     if rows:
         append_rows(rows)
     if mode == "full" and best_now:
