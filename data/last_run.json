@@ -1,13 +1,14 @@
 {
-  "run_at_sgt": "2026-11-26T22:17:01+08:00",
+  "run_at_sgt": "2026-11-26T22:19:57+08:00",
   "mode": "focus",
   "pairs_checked": 2,
-  "pairs_ok": 1,
-  "rows_saved": 1,
+  "pairs_ok": 0,
+  "rows_saved": 0,
   "errors": [],
   "ok": true,
   "dates_no_direct_flight": [],
   "dates_not_read_this_run": [
-    "2027-05-24"
+    "2027-05-24",
+    "2027-06-01"
   ]
 }
