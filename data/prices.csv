@@ -746,3 +746,5 @@ checked_at_utc,checked_at_sgt,check_dow,check_hour_sgt,mode,depart,return,days_t
 2026-11-26T22:17:01+00:00,2026-11-27T06:17:01+08:00,Fri,6,focus,2027-05-24,2027-05-31,178,1,Scoot,"12:35 AM on Mon, May 24","7:25 AM on Mon, May 24",5 hr 50 min,0,$4250,USD,5484.62,783.52,typical
 2026-11-26T22:19:09+00:00,2026-11-27T06:19:09+08:00,Fri,6,focus,2027-05-24,2027-05-31,178,1,Scoot,"12:35 AM on Mon, May 24","7:25 AM on Mon, May 24",5 hr 50 min,0,$4250,USD,5484.62,783.52,typical
 2026-11-26T22:19:09+00:00,2026-11-27T06:19:09+08:00,Fri,6,focus,2027-06-01,2027-06-08,186,1,Scoot,"12:35 AM on Tue, Jun 1","7:25 AM on Tue, Jun 1",5 hr 50 min,0,$5237,USD,6758.35,965.48,high
+2026-11-26T23:17:01+00:00,2026-11-27T07:17:01+08:00,Fri,7,focus,2027-05-24,2027-05-31,178,1,Scoot,"12:35 AM on Mon, May 24","7:25 AM on Mon, May 24",5 hr 50 min,0,$4250,USD,5484.62,783.52,typical
+2026-11-26T23:17:01+00:00,2026-11-27T07:17:01+08:00,Fri,7,focus,2027-06-01,2027-06-08,186,1,Scoot,"12:35 AM on Tue, Jun 1","7:25 AM on Tue, Jun 1",5 hr 50 min,0,$5237,USD,6758.35,965.48,high
