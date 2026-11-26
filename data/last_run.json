@@ -1,25 +1,11 @@
 {
-  "run_at_sgt": "2026-11-27T02:17:00+08:00",
-  "mode": "full",
-  "pairs_checked": 22,
-  "pairs_ok": 10,
-  "rows_saved": 10,
+  "run_at_sgt": "2026-11-27T02:31:51+08:00",
+  "mode": "focus",
+  "pairs_checked": 2,
+  "pairs_ok": 2,
+  "rows_saved": 2,
   "errors": [],
   "ok": true,
-  "dates_no_direct_flight": [
-    "2027-05-27",
-    "2027-05-29",
-    "2027-06-03",
-    "2027-06-05",
-    "2027-06-10",
-    "2027-06-12"
-  ],
-  "dates_not_read_this_run": [
-    "2027-05-25",
-    "2027-05-26",
-    "2027-06-01",
-    "2027-06-02",
-    "2027-06-11",
-    "2027-06-14"
-  ]
+  "dates_no_direct_flight": [],
+  "dates_not_read_this_run": []
 }
